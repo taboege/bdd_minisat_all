@@ -1,3 +1,7 @@
+cnf2obdd or bdd_minisat_all v1.0.1 (Released 27th Oct. 2016)
+========================================
+* modified signal handler.
+
 cnf2obdd or bdd_minisat_all v1.0.0 (Released 30th Sep. 2015)
 ========================================
 * Introduced another code name to place this software as a member of minisat_all solver family.

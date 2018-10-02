@@ -28,6 +28,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #endif
 
 #include <time.h>
+#include <signal.h>
 #include "vec.h"
 #include "obdd.h"
 #include "trie.h"
@@ -64,6 +65,8 @@ static inline int  lit_sign(lit l) { return (l & 1); }
 
 //=================================================================================================
 // Public interface:
+
+extern volatile sig_atomic_t eflag;
 
 struct solver_t;
 typedef struct solver_t solver;

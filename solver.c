@@ -1883,6 +1883,7 @@ static lbool solver_search(solver* s, int nof_conflicts, int nof_learnts)
     s->cla_decay = (float)(1 / clause_decay);
 
     for (;;){
+		if (eflag == 1) return l_False;
         clause* confl = solver_propagate(s);
         if (confl != 0) {
             // CONFLICT
@@ -2004,6 +2005,7 @@ static lbool solver_search(solver* s, int nof_conflicts, int nof_learnts)
     veci_new(&learnt_clause);
 
     for (;;){
+		if (eflag == 1) return l_False;
         clause* confl = solver_propagate(s);
         if (confl != 0){
             // CONFLICT

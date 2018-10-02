@@ -214,14 +214,11 @@ void printStats(stats* stats, int cpu_time, bool interrupted)
 #endif
 }
 
-solver* slv;
-static void SIGINT_handler(int signum) {
-    printf("\n"); printf("*** INTERRUPTED ***\n");
-    totalup_stats(slv);
-    printStats(&slv->stats, clock() - slv->stats.clk, true);
-    printf("\n"); printf("*** INTERRUPTED ***\n");
-    exit(0); }
-
+volatile sig_atomic_t eflag = 0;
+static void SIGINT_handler(int signum)
+{
+	eflag = 1;
+}
 
 //=================================================================================================
 
@@ -303,7 +300,6 @@ int main(int argc, char** argv)
     }
 
     s->verbosity = 1;
-    slv = s;
     if (signal(SIGINT, SIGINT_handler) == SIG_ERR) {
         fprintf(stderr, "ERROR! Cound not set signal");
         exit(1);
@@ -318,7 +314,13 @@ int main(int argc, char** argv)
 #else
     printf("pathwidth         : %12d\n",   s->maxpathwidth);
 #endif
-    printStats(&s->stats, clock() - s->stats.clk, false);
+	if (eflag == 1) {
+    	printf("\n"); printf("*** INTERRUPTED ***\n");
+    	printStats(&s->stats, clock() - s->stats.clk, true);
+    	printf("\n"); printf("*** INTERRUPTED ***\n");
+	} else {
+    	printStats(&s->stats, clock() - s->stats.clk, false);
+	}
 
     if (outfile != NULL)
         obdd_decompose(out, s->size, s->root);
