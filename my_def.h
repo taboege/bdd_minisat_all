@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
+#include <err.h>
 
 /*---------------------------------------------------------------------------*/
 /* Macro declarations                                                        */
@@ -26,7 +27,7 @@ typedef int32_t itemval; //!< item value type, which must be able to contain INF
   do {                                                                                                  \
     if (v > MAX_RECURSION_DEPTH)                                                                       \
       {                                                                                                 \
-fprintf(stderr, "error:%s:%d:%s: maximum recursion depth exceeded\n", __FILE__, __LINE__, __func__);  \
+warn("error:%s:%d:%s: maximum recursion depth exceeded\n", __FILE__, __LINE__, __func__);  \
   exit(EXIT_FAILURE);                                                                                   \
       }                                                                                                 \
     v++;                                                                                                \
@@ -47,7 +48,7 @@ fprintf(stderr, "error:%s:%d:%s: maximum recursion depth exceeded\n", __FILE__, 
   do {                                                                                \
     if (!(v))                                                                         \
       {                                                                               \
-        fprintf(stderr, "warning:%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, msg);  \
+        warn("warning:%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, msg);  \
       }                                                                               \
   } while(0)
 
@@ -55,7 +56,7 @@ fprintf(stderr, "error:%s:%d:%s: maximum recursion depth exceeded\n", __FILE__, 
   do {                                                                      \
     if (!(v))                                                               \
       {                                                                     \
-  fprintf(stderr, "error:%s:%d:%s failed\n", __FILE__, __LINE__, __func__); \
+  warn("error:%s:%d:%s failed\n", __FILE__, __LINE__, __func__); \
   exit(EXIT_FAILURE);                                                       \
       }                                                                     \
   } while(0)
@@ -64,7 +65,7 @@ fprintf(stderr, "error:%s:%d:%s: maximum recursion depth exceeded\n", __FILE__, 
   do {                                                                        \
     if (!(v))                                                                 \
       {                                                                       \
-  fprintf(stderr, "error:%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, msg);  \
+  warn("error:%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, msg);  \
   exit(EXIT_FAILURE);                                                         \
       }                                                                       \
   } while(0)
@@ -74,7 +75,7 @@ fprintf(stderr, "error:%s:%d:%s: maximum recursion depth exceeded\n", __FILE__, 
   do {                                                                      \
     if ((v) != ST_SUCCESS)                                                  \
       {                                                                     \
-  fprintf(stderr, "error:%s:%d:%s failed\n", __FILE__, __LINE__, __func__); \
+  warn("error:%s:%d:%s failed\n", __FILE__, __LINE__, __func__); \
   exit(EXIT_FAILURE);                                                       \
       }                                                                     \
   } while(0)
@@ -83,7 +84,7 @@ fprintf(stderr, "error:%s:%d:%s: maximum recursion depth exceeded\n", __FILE__, 
   do {                                                                        \
     if ((v) != ST_SUCCESS)                                                    \
       {                                                                       \
-  fprintf(stderr, "error:%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, msg);  \
+  warn("error:%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, msg);  \
   exit(EXIT_FAILURE);                                                         \
       }                                                                       \
   } while(0)

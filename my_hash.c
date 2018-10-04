@@ -122,7 +122,7 @@ void ht_enlarge(my_hash *h)
   ENSURE_TRUE_MSG(oldcnt < (UINTMAX_MAX >> HASH_ENLARGEMENT_WIDTH), "bucket count overflow");
   const uintmax_t newcnt = oldcnt << HASH_ENLARGEMENT_WIDTH;
 #ifdef HT_LOG
-  printf("hashtable_resizing\t%ju\t%ju\n", oldcnt, newcnt);
+  diag("hashtable_resizing\t%ju\t%ju\n", oldcnt, newcnt);
 #endif /*HT_LOG*/
   struct ht_entry **oldtable = h->table;
   struct ht_entry **newtable = (struct ht_entry**) malloc(sizeof(struct ht_entry*) * newcnt);

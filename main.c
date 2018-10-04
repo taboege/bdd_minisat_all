@@ -20,6 +20,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 // Modified to compile with MS Visual Studio 6.0 by Alan Mishchenko
 // Modified to implement bdd-based AllSAT solver on top of MiniSat by Takahisa Toda
 
+#include "main.h"
 #include "solver.h"
 
 #ifdef REDUCTION
@@ -33,7 +34,9 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <time.h>
+#include <err.h>
 //#include <unistd.h>
 #include <signal.h>
 //#include <zlib.h>
@@ -42,6 +45,18 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 //=================================================================================================
 // Helpers:
+
+/* diag but for diagnostics */
+int diag(char *fmt, ...)
+{
+	va_list args;
+	int res;
+
+	va_start(args, fmt);
+	res = vfprintf(stderr, fmt, args);
+	va_end(args);
+	return res;
+}
 
 #ifdef REDUCTION
 DdManager *dd_mgr = NULL; //!< BDD/ZDD manager for CUDD
@@ -94,7 +109,7 @@ static inline int parseInt(char** in) {
     skipWhitespace(in);
     if      (**in == '-') _neg = 1, (*in)++;
     else if (**in == '+') (*in)++;
-    if (**in < '0' || **in > '9') fprintf(stderr, "PARSE ERROR! Unexpected char: %c\n", **in), exit(1);
+    if (**in < '0' || **in > '9') warn("PARSE ERROR! Unexpected char: %c\n", **in), exit(1);
     while (**in >= '0' && **in <= '9')
         val = val*10 + (**in - '0'),
         (*in)++;
@@ -151,66 +166,66 @@ static lbool parse_DIMACS(FILE * in, solver* s) {
 void printStats(stats* stats, unsigned long cpu_time, bool interrupted)
 {
     double Time    = (double)(cpu_time)/(double)(CLOCKS_PER_SEC);
-    printf("restarts          : %12llu\n", stats->starts);
-    printf("conflicts         : %12.0f           (%9.0f / sec      )\n",  (double)stats->conflicts   , (double)stats->conflicts   /Time);
-    printf("decisions         : %12.0f           (%9.0f / sec      )\n",  (double)stats->decisions   , (double)stats->decisions   /Time);
-    printf("propagations      : %12.0f           (%9.0f / sec      )\n",  (double)stats->propagations, (double)stats->propagations/Time);
-    printf("inspects          : %12.0f           (%9.0f / sec      )\n",  (double)stats->inspects    , (double)stats->inspects    /Time);
-    printf("conflict literals : %12.0f           (%9.2f %% deleted  )\n", (double)stats->tot_literals, (double)(stats->max_literals - stats->tot_literals) * 100.0 / (double)stats->max_literals);
-    printf("cpu time (solve)  : %12.2f sec\t", Time);
-    printf("\n");
+    diag("restarts          : %12llu\n", stats->starts);
+    diag("conflicts         : %12.0f           (%9.0f / sec      )\n",  (double)stats->conflicts   , (double)stats->conflicts   /Time);
+    diag("decisions         : %12.0f           (%9.0f / sec      )\n",  (double)stats->decisions   , (double)stats->decisions   /Time);
+    diag("propagations      : %12.0f           (%9.0f / sec      )\n",  (double)stats->propagations, (double)stats->propagations/Time);
+    diag("inspects          : %12.0f           (%9.0f / sec      )\n",  (double)stats->inspects    , (double)stats->inspects    /Time);
+    diag("conflict literals : %12.0f           (%9.2f %% deleted  )\n", (double)stats->tot_literals, (double)(stats->max_literals - stats->tot_literals) * 100.0 / (double)stats->max_literals);
+    diag("cpu time (solve)  : %12.2f sec\t", Time);
+    diag("\n");
 
-    printf("refreshes         : %12llu\n", stats->refreshes);
-    printf("|obdd|            : %12llu\n", stats->obddsize);
+    diag("refreshes         : %12llu\n", stats->refreshes);
+    diag("|obdd|            : %12llu\n", stats->obddsize);
 
-    printf("cache hits        : %12llu\n",   stats->ncachehits);
-    printf("cache lookup      : %12llu\n",   stats->ncachelookup);
+    diag("cache hits        : %12llu\n",   stats->ncachehits);
+    diag("cache lookup      : %12llu\n",   stats->ncachelookup);
 
 #ifdef CUTSETCACHE 
-    printf("cache type        : cutset\n");
+    diag("cache type        : cutset\n");
 #else
-    printf("cache type        : separator\n");
+    diag("cache type        : separator\n");
 #endif
 
 #ifdef LAZY
-    printf("cache frequency   : lazy\n");
+    diag("cache frequency   : lazy\n");
 #else
-    printf("cache frequency   : original\n");
+    diag("cache frequency   : original\n");
 #endif
 
 #ifdef NONBLOCKING
-    printf("minisat_all type  : non-blocking\n");
+    diag("minisat_all type  : non-blocking\n");
 #if defined(BT)
-    printf("backtrack method  : bt\n");
+    diag("backtrack method  : bt\n");
 #elif defined(BJ)
-    printf("backtrack method  : bj\n");
+    diag("backtrack method  : bj\n");
 #elif defined(CBJ)
-    printf("backtrack method  : cbj\n");
+    diag("backtrack method  : cbj\n");
 #else
-    printf("backtrack method  : bj+cbj\n");
+    diag("backtrack method  : bj+cbj\n");
 #endif
 #ifdef DLEVEL
-    printf("1UIP              : dlevel\n");
+    diag("1UIP              : dlevel\n");
 #else
-    printf("1UIP              : sublevel\n");
+    diag("1UIP              : sublevel\n");
 #endif
 #else
-    printf("minisat_all type  : blocking\n");
+    diag("minisat_all type  : blocking\n");
 #endif
 
 #ifdef GMP
-    printf("gmp               : enabled\n");
-    printf("SAT (full)        : ");
+    diag("gmp               : enabled\n");
+    diag("SAT (full)        : ");
     mpz_out_str(stdout, 10, stats->tot_solutions_gmp);
     if (interrupted)
-        printf("+");
-    printf("\n");
+        diag("+");
+    diag("\n");
 #else
-    printf("gmp               : disabled\n");
-    printf("SAT (full)        : %12ju", stats->tot_solutions);
+    diag("gmp               : disabled\n");
+    diag("SAT (full)        : %12ju", stats->tot_solutions);
     if (stats->tot_solutions >= INTPTR_MAX || interrupted)
-        printf("+");
-    printf("\n");
+        diag("+");
+    diag("\n");
 #endif
 }
 
@@ -224,10 +239,10 @@ static void SIGINT_handler(int signum)
 
 static inline void PRINT_USAGE(char *p)
 {
-    fprintf(stderr, "Usage:\t%s [options] input-file [output-file]\n", (p));
+    printf("Usage:\t%s [options] input-file [output-file]\n", (p));
 #ifdef NONBLOCKING
 #ifdef REFRESH
-    fprintf(stderr, "-n<int>\tmaximum number of obdd nodes: if exceeded, obdd is refreshed\n");
+    printf("-n<int>\tmaximum number of obdd nodes: if exceeded, obdd is refreshed\n");
 #endif
 #endif
 }
@@ -277,11 +292,11 @@ int main(int argc, char** argv)
 
     in = fopen(infile, "rb");
     if (in == NULL)
-        fprintf(stderr, "ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : infile), exit(1);
+        warn("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : infile), exit(1);
     if (outfile != NULL) {
         out = fopen(outfile, "wb");
         if (out == NULL)
-            fprintf(stderr, "ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : outfile), exit(1);
+            warn("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : outfile), exit(1);
 #ifdef NONBLOCKING
         else s->out = out;
 #endif
@@ -295,29 +310,29 @@ int main(int argc, char** argv)
 
     if (st == l_False){
         solver_delete(s);
-        printf("Trivial problem\nUNSATISFIABLE\n");
+        diag("Trivial problem\nUNSATISFIABLE\n");
         exit(20);
     }
 
     s->verbosity = 1;
     if (signal(SIGINT, SIGINT_handler) == SIG_ERR) {
-        fprintf(stderr, "ERROR! Cound not set signal");
+        warn("ERROR! Cound not set signal");
         exit(1);
     }
 
     st = solver_solve(s,0,0);
 
-    printf("input             : %s\n", infile);
-    printf("variables         : %12d\n",   s->size);
+    diag("input             : %s\n", infile);
+    diag("variables         : %12d\n",   s->size);
 #ifdef CUTSETCACHE
-    printf("cutwidth          : %12d\n",   s->maxcutwidth);
+    diag("cutwidth          : %12d\n",   s->maxcutwidth);
 #else
-    printf("pathwidth         : %12d\n",   s->maxpathwidth);
+    diag("pathwidth         : %12d\n",   s->maxpathwidth);
 #endif
 	if (eflag == 1) {
-    	printf("\n"); printf("*** INTERRUPTED ***\n");
+    	diag("\n"); diag("*** INTERRUPTED ***\n");
     	printStats(&s->stats, clock() - s->stats.clk, true);
-    	printf("\n"); printf("*** INTERRUPTED ***\n");
+    	diag("\n"); diag("*** INTERRUPTED ***\n");
 	} else {
     	printStats(&s->stats, clock() - s->stats.clk, false);
 	}
@@ -331,8 +346,8 @@ int main(int argc, char** argv)
         clock_t starttime_reduce = clock();
         bddp  f = bdd_reduce(s->root);
         clock_t endtime_reduce = clock();
-        printf("cpu time (reduce) : %12.2f sec\n", (float)(endtime_reduce - starttime_reduce)/(float)(CLOCKS_PER_SEC));
-        printf("|bdd|             : %12ju\n",  bdd_size(f));
+        diag("cpu time (reduce) : %12.2f sec\n", (float)(endtime_reduce - starttime_reduce)/(float)(CLOCKS_PER_SEC));
+        diag("|bdd|             : %12ju\n",  bdd_size(f));
     }
 #endif
 

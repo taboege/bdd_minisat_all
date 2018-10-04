@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "main.h"
 #include "my_def.h"
 #include "trie.h"
 
@@ -290,11 +291,11 @@ void trie_delete(trie_t *t)
  */
 void trie_insert(unsigned int *k, uintptr_t v, trie_t *t)
 {
-  //printf("<");
+  //diag("<");
   //for(int i = 0; i < t->len; i++) {
-  //  printf("%d", DIGIT(k, i));
+  //  diag("%d", DIGIT(k, i));
   //}
-  //printf("\n");fflush(stdout);
+  //diag("\n");fflush(stdout);
 
 #ifdef TRIE_REC
     t->root = trie_insertR(k, 0, t->len, v, t->root);
@@ -369,11 +370,11 @@ static st_node *trie_insertR(unsigned int *k, int w, int len, uintptr_t v, st_no
  */
 uintptr_t trie_search(unsigned int *k, trie_t *t)
 {
-  //printf("?");
+  //diag("?");
   //for(int i = 0; i < t->len; i++) {
-  //  printf("%d", DIGIT(k,i));
+  //  diag("%d", DIGIT(k,i));
   //}
-  //printf("\n");fflush(stdout);
+  //diag("\n");fflush(stdout);
 
 #ifdef TRIE_REC
   return trie_searchR(k, 0, t->len, t->root);

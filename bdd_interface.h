@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <limits.h>
 
+#include "main.h"
 #include "my_def.h"
 
 #if defined(REDUCTION) // added
@@ -39,8 +40,8 @@ static inline int bdd_init(itemval maxval, uintmax_t n)
     ENSURE_TRUE_MSG(dd_mgr != NULL, "BDD manager initialization failed.");
     Cudd_DisableGarbageCollection(dd_mgr);// disable GC since we never do dereference of nodes.
 #ifdef MISC_LOG
-    if(Cudd_GarbageCollectionEnabled(dd_mgr)) printf("GC\tenabled\n");
-    else                                      printf("GC\tdisabled\n");    
+    if(Cudd_GarbageCollectionEnabled(dd_mgr)) diag("GC\tenabled\n");
+    else                                      diag("GC\tdisabled\n");    
 #endif /*MISC_LOG*/
 
     return ST_SUCCESS;
