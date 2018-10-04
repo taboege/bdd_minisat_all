@@ -19,6 +19,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 // Modified to compile with MS Visual Studio 6.0 by Alan Mishchenko
 // Modified to implement bdd-based AllSAT solver on top of MiniSat by Takahisa Toda
+// Modified to be easier to use in pipe chains by Tobias Boege <tboege@ovgu.de> 2018
 
 #include "main.h"
 #include "solver.h"
@@ -259,51 +260,53 @@ int main(int argc, char** argv)
     char *infile  = NULL;
     char *outfile = NULL;
     int  lim, span, maxnodes;
-  
-    /*** RECEIVE INPUTS ***/  
-    for (int i = 1; i < argc; i++) {
-        if (argv[i][0] == '-') {
-            switch (argv[i][1]) {
-                case 'n':
+
+    /*** RECEIVE INPUTS ***/
+    for(int i = 1; i < argc; i++) {
+      if(argv[i][0] == '-') {
+        switch (argv[i][1]){
+        case '\0': /* singular "-" */
+          if (infile == NULL)       { infile  = ""; }
+          else if (outfile == NULL) { outfile = ""; }
+          break;
+        case 'n':
 #ifdef NONBLOCKING
 #ifdef REFRESH
-                    maxnodes = atoi(argv[i]+2);
-                    if (maxnodes <= 0) {
-                        PRINT_USAGE(argv[0]); return  0;  
-                    }
-                    s->stats.maxnodes = maxnodes;
+            maxnodes = atoi(argv[i]+2);
+            if (maxnodes <= 0) {
+                PRINT_USAGE(argv[0]); return  0;
+            }
+            s->stats.maxnodes = maxnodes;
 #endif
 #endif
-                    break;
-                case '?': case 'h': default:
-                    PRINT_USAGE(argv[0]); return  0;  
-            }   
-        } else {
-            if (infile == NULL)
-                infile  = argv[i];
-            else if(outfile == NULL)
-                outfile = argv[i];
-            else
-                {PRINT_USAGE(argv[0]); return  0;} 
+            break;
+        case '?': case 'h': default:
+          PRINT_USAGE(argv[0]); return  0;
         }
+      } else {
+        if(infile == NULL)        {infile  = argv[i];}
+        else if(outfile == NULL)  {outfile = argv[i];}
+        else                      {PRINT_USAGE(argv[0]); return  0;}
+      }
     }
-    if (infile == NULL) 
-        {PRINT_USAGE(argv[0]); return  0;} 
+    infile  =  infile ?  infile : "";
+    outfile = outfile ? outfile : "";
 
-    in = fopen(infile, "rb");
+    /* Defaults (or "-") mean stdin and stdout */
+    if (!*infile) { in = stdin; }
+    else          { in = fopen(infile, "rb"); }
     if (in == NULL)
-        warn("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : infile), exit(1);
-    if (outfile != NULL) {
-        out = fopen(outfile, "wb");
-        if (out == NULL)
-            warn("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : outfile), exit(1);
-#ifdef NONBLOCKING
-        else s->out = out;
-#endif
-    } else {
-        out = NULL;
+        warn("ERROR! Could not open file: %s\n", infile),
+        exit(1);
+    if (!*outfile) { out = stdout; }
+    else           { out = fopen(outfile, "wb"); }
+    if (out == NULL) {
+        warn("ERROR! Could not open file: %s\n", outfile);
+        exit(1);
     }
-
+#ifdef NONBLOCKING
+    s->out = out;
+#endif
 
     st = parse_DIMACS(in, s);
     fclose(in);
